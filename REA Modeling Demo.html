@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REA Modeling Demo</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --line: #d9deea;
+      --text: #1f2a44;
+      --muted: #5f6b85;
+      --accent: #3157d5;
+      --good: #16794a;
+      --bad: #b42318;
+      --resource: #e8f0ff;
+      --event: #eefbf3;
+      --agent: #fff4e8;
+      --resource-line: #3157d5;
+      --duality-line: #16794a;
+      --agent-line: #c97700;
+      --shadow: 0 10px 30px rgba(31, 42, 68, 0.08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #ffffff, #edf2ff);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+    }
+
+    .sub {
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 18px;
+      max-width: 1100px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button, select {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #eef3ff;
+      border: 1px solid #cfdbff;
+      font-weight: 700;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 4px;
+      border-radius: 99px;
+      display: inline-block;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 0.85fr 1.65fr 0.75fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .section-title h2 {
+      margin: 0 0 6px 0;
+      font-size: 1.1rem;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+      min-height: 80px;
+      padding: 12px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      background: #fcfdff;
+    }
+
+    .bins {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .bin {
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      min-height: 120px;
+      padding: 14px;
+    }
+
+    .bin.resource { background: var(--resource); }
+    .bin.event { background: var(--event); }
+    .bin.agent { background: var(--agent); }
+
+    .token-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 48px;
+      margin-top: 10px;
+    }
+
+    .token {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-weight: 600;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 3px 8px rgba(31, 42, 68, 0.06);
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .token.correct {
+      border-color: rgba(22, 121, 74, 0.35);
+      background: #fbfffc;
+    }
+
+    .token.wrong {
+      border-color: rgba(180, 35, 24, 0.75);
+      background: #fff6f5;
+      box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.08);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      min-height: 860px;
+      background:
+        linear-gradient(90deg, rgba(232,240,255,0.55) 0%, rgba(232,240,255,0.55) 33.33%, rgba(238,251,243,0.55) 33.33%, rgba(238,251,243,0.55) 66.66%, rgba(255,244,232,0.55) 66.66%, rgba(255,244,232,0.55) 100%);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    svg.lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .canvas-column-label {
+      position: absolute;
+      top: 8%;
+      transform: translateX(-50%);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    .canvas-column-label.resource { background: #f7faff; }
+    .canvas-column-label.event { background: #f7fff9; }
+    .canvas-column-label.agent { background: #fffaf3; }
+
+    .canvas-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      padding: 12px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: 0 8px 20px rgba(31, 42, 68, 0.10);
+      font-weight: 700;
+      text-align: center;
+      min-width: 140px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .canvas-node.resource { background: #f7faff; }
+    .canvas-node.event { background: #f7fff9; }
+    .canvas-node.agent { background: #fffaf3; }
+
+    .canvas-node.selected {
+      outline: 3px solid rgba(49, 87, 213, 0.25);
+      border-color: var(--accent);
+    }
+
+    .canvas-node .type {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mode-buttons {
+      display: grid;
+      gap: 10px;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f8faff;
+      border: 1px solid var(--line);
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .link-pill {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #f1f4fb;
+      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+    }
+
+    .link-pill button {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      border: 1px solid var(--line);
+      background: white;
+      cursor: pointer;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .check {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fbfcff;
+    }
+
+    .pass { border-left: 6px solid var(--good); }
+    .fail { border-left: 6px solid #b42318; }
+
+    @media (max-width: 1250px) {
+      .grid { grid-template-columns: 1fr; }
+      .canvas-wrap { min-height: 620px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero">
+      <h1>REA Modeling Demo</h1>
+      <div class="sub">
+        This is a game where students classify REA components and then build connections between by selecting and connection type and clicking the components to connect.
+      </div>
+      <div class="controls">
+        <label><strong>Cycle:</strong>
+          <select id="cycleSelect"></select>
+        </label>
+        <button class="primary" id="loadCycleBtn">Load Demo</button>
+        <button id="shuffleBtn">Shuffle Cards</button>
+        <button id="resetBtn">Reset Demo</button>
+        <span class="score" id="scoreBadge">Score: 0 / 100</span>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background: var(--resource-line);"></i> affects resource</span>
+        <span><i class="swatch" style="background: var(--duality-line);"></i> duality</span>
+        <span><i class="swatch" style="background: var(--agent-line);"></i> participates</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="section-title">
+          <h2>1) Sort the Cards</h2>
+          <div class="small">Drag cards into the correct REA bins first.</div>
+        </div>
+
+        <div><strong>Card Bank</strong></div>
+        <div class="bank token-list" id="bank"></div>
+
+        <div class="bins">
+          <div class="bin resource">
+            <strong>Resources</strong>
+            <div class="token-list" id="resourceBin"></div>
+          </div>
+          <div class="bin event">
+            <strong>Events</strong>
+            <div class="token-list" id="eventBin"></div>
+          </div>
+          <div class="bin agent">
+            <strong>Agents</strong>
+            <div class="token-list" id="agentBin"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>2) Click to Draw Connections</h2>
+          <div class="small">Pick a line type, then click one node and another to connect them.</div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <svg class="lines" id="lineLayer"></svg>
+        </div>
+      </div>
+
+      <div class="card toolbar">
+        <div>
+          <h2 style="margin:0 0 6px 0; font-size:1.1rem;">3) Connection Tools</h2>
+          <div class="small">Choose the kind of connection you want to draw.</div>
+        </div>
+
+        <div class="mode-buttons">
+          <button class="mode-btn active" data-mode="affects">Affects Resource</button>
+          <button class="mode-btn" data-mode="duality">Duality</button>
+          <button class="mode-btn" data-mode="participates">Participates</button>
+        </div>
+
+        <div class="status" id="statusBox">
+          Selected mode: <strong>Affects Resource</strong><br>
+          Click one node, then click another node to create a line.
+        </div>
+
+        <div>
+          <strong>Current Links</strong>
+          <div class="pill-row" id="linksArea"></div>
+        </div>
+
+        <div>
+          <strong>Validation</strong>
+          <div class="checklist" id="validationArea"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cycleData = {
+      revenue: {
+        label: "Revenue Cycle",
+        displayOrder: {
+          resource: ["inventory", "cash"],
+          event: ["sale", "cash_receipt"],
+          agent: ["customer", "sales_clerk"]
+        },
+        cards: [
+          { id: "inventory", label: "Inventory", type: "resource" },
+          { id: "cash", label: "Cash", type: "resource" },
+          { id: "sale", label: "Sale", type: "event" },
+          { id: "cash_receipt", label: "Cash Receipt", type: "event" },
+          { id: "customer", label: "Customer", type: "agent" },
+          { id: "sales_clerk", label: "Sales Clerk", type: "agent" }
+        ]
+      },
+      expenditure: {
+        label: "Expenditure Cycle",
+        displayOrder: {
+          resource: ["inventory", "cash"],
+          event: ["purchase", "cash_disbursement"],
+          agent: ["vendor", "purchasing_clerk"]
+        },
+        cards: [
+          { id: "cash", label: "Cash", type: "resource" },
+          { id: "inventory", label: "Inventory / Supplies", type: "resource" },
+          { id: "purchase", label: "Purchase / Receive Goods", type: "event" },
+          { id: "cash_disbursement", label: "Cash Disbursement", type: "event" },
+          { id: "vendor", label: "Vendor", type: "agent" },
+          { id: "purchasing_clerk", label: "Purchasing Clerk", type: "agent" }
+        ]
+      },
+      production: {
+        label: "Production Cycle",
+        displayOrder: {
+          resource: ["raw_materials", "labor_time", "finished_goods"],
+          event: ["use_materials", "complete_production"],
+          agent: ["production_worker", "production_supervisor"]
+        },
+        cards: [
+          { id: "raw_materials", label: "Raw Materials", type: "resource" },
+          { id: "finished_goods", label: "Finished Goods", type: "resource" },
+          { id: "labor_time", label: "Labor Time", type: "resource" },
+          { id: "use_materials", label: "Use Materials", type: "event" },
+          { id: "complete_production", label: "Complete Production", type: "event" },
+          { id: "production_worker", label: "Production Worker", type: "agent" },
+          { id: "production_supervisor", label: "Production Supervisor", type: "agent" }
+        ]
+      },
+      hr_payroll: {
+        label: "HR / Payroll Cycle",
+        displayOrder: {
+          resource: ["labor_services", "cash"],
+          event: ["work_performed", "payroll_payment"],
+          agent: ["employee", "payroll_clerk"]
+        },
+        cards: [
+          { id: "cash", label: "Cash", type: "resource" },
+          { id: "labor_services", label: "Labor Services", type: "resource" },
+          { id: "work_performed", label: "Work Performed", type: "event" },
+          { id: "payroll_payment", label: "Payroll Payment", type: "event" },
+          { id: "employee", label: "Employee", type: "agent" },
+          { id: "payroll_clerk", label: "Payroll Clerk", type: "agent" }
+        ]
+      }
+    };
+
+    let currentCycle = "revenue";
+    let placements = {};
+    let cards = [];
+    let links = [];
+    let currentMode = "affects";
+    let selectedNode = null;
+
+    const cycleSelect = document.getElementById("cycleSelect");
+    const bank = document.getElementById("bank");
+    const resourceBin = document.getElementById("resourceBin");
+    const eventBin = document.getElementById("eventBin");
+    const agentBin = document.getElementById("agentBin");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const lineLayer = document.getElementById("lineLayer");
+    const linksArea = document.getElementById("linksArea");
+    const validationArea = document.getElementById("validationArea");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const statusBox = document.getElementById("statusBox");
+
+    function initCycleOptions() {
+      Object.entries(cycleData).forEach(([key, value]) => {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = value.label;
+        cycleSelect.appendChild(opt);
+      });
+      cycleSelect.value = currentCycle;
+    }
+
+    function cloneCards(cycleKey) {
+      return cycleData[cycleKey].cards.map(card => ({ ...card }));
+    }
+
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function loadCycle(cycleKey, shouldShuffle = true) {
+      currentCycle = cycleKey;
+      cards = cloneCards(cycleKey);
+      if (shouldShuffle) cards = shuffle(cards);
+      placements = {};
+      cards.forEach(card => placements[card.id] = "bank");
+      links = [];
+      selectedNode = null;
+      renderAll();
+    }
+
+    function getCardById(id) {
+      return cards.find(c => c.id === id) || cycleData[currentCycle].cards.find(c => c.id === id);
+    }
+
+    function makeToken(card) {
+      const el = document.createElement("div");
+      const placement = placements[card.id];
+      const correctnessClass = placement === 'bank' ? '' : (placement === card.type ? 'correct' : 'wrong');
+      el.className = `token ${correctnessClass}`;
+      el.draggable = true;
+      el.dataset.id = card.id;
+      el.textContent = card.label;
+      if (placement !== 'bank') {
+        el.title = placement === card.type ? 'Placed correctly' : `This belongs in ${card.type}`;
+      }
+      el.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text/plain", card.id);
+      });
+      return el;
+    }
+
+    function renderTokens() {
+      [bank, resourceBin, eventBin, agentBin].forEach(el => el.innerHTML = "");
+      const holders = { bank, resource: resourceBin, event: eventBin, agent: agentBin };
+      cards.forEach(card => {
+        const token = makeToken(card);
+        holders[placements[card.id]].appendChild(token);
+      });
+    }
+
+    function setupDropzone(zoneEl, zoneName) {
+      zoneEl.addEventListener("dragover", e => e.preventDefault());
+      zoneEl.addEventListener("drop", e => {
+        e.preventDefault();
+        const cardId = e.dataTransfer.getData("text/plain");
+        const card = getCardById(cardId);
+        placements[cardId] = zoneName;
+        if (zoneName !== "bank") selectedNode = null;
+
+        if (zoneName === 'bank') {
+          updateStatus(`Moved <strong>${card.label}</strong> back to the card bank.`);
+        } else if (zoneName === card.type) {
+          updateStatus(`<strong>${card.label}</strong> was placed in the correct <strong>${zoneName}</strong> category.`);
+        } else {
+          updateStatus(`<strong>${card.label}</strong> is currently in the wrong category. It belongs in <strong>${card.type}</strong>.`);
+        }
+
+        renderAll();
+      });
+    }
+
+    function sortedCardsByPlacement(zone) {
+      const placed = cards.filter(card => placements[card.id] === zone);
+      const orderedIds = cycleData[currentCycle].displayOrder?.[zone] || [];
+      if (!orderedIds.length) return placed;
+      return placed.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+    }
+
+    function renderCanvasNodes() {
+      canvasWrap.querySelectorAll('.canvas-node, .canvas-column-label').forEach(n => n.remove());
+
+      const resources = sortedCardsByPlacement('resource');
+      const events = sortedCardsByPlacement('event');
+      const agents = sortedCardsByPlacement('agent');
+
+      const columns = [
+        { key: 'resource', title: 'Resources', cards: resources, x: 13 },
+        { key: 'event', title: 'Events', cards: events, x: 50 },
+        { key: 'agent', title: 'Agents', cards: agents, x: 87 }
+      ];
+
+      columns.forEach(col => {
+        const label = document.createElement('div');
+        label.className = `canvas-column-label ${col.key}`;
+        label.style.left = `${col.x}%`;
+        label.textContent = col.title;
+        canvasWrap.appendChild(label);
+
+        const count = col.cards.length;
+        col.cards.forEach((card, index) => {
+          const y = count === 1 ? 52 : 20 + (index * (64 / Math.max(count - 1, 1)));
+          const node = document.createElement('div');
+          node.className = `canvas-node ${card.type} ${selectedNode === card.id ? 'selected' : ''}`;
+          node.dataset.id = card.id;
+          node.style.left = `${col.x}%`;
+          node.style.top = `${y}%`;
+          node.innerHTML = `${card.label}<span class="type">${card.type}</span>`;
+          node.addEventListener('click', () => handleNodeClick(card.id));
+          canvasWrap.appendChild(node);
+        });
+      });
+    }
+
+    function handleNodeClick(nodeId) {
+      if (!selectedNode) {
+        selectedNode = nodeId;
+        updateStatus(`Selected <strong>${getCardById(nodeId).label}</strong>. Now click another node to create a <strong>${modeLabel(currentMode)}</strong> line.`);
+        renderAll();
+        return;
+      }
+      if (selectedNode === nodeId) {
+        selectedNode = null;
+        updateStatus(`Selection cleared. Click one node, then another node to create a <strong>${modeLabel(currentMode)}</strong> line.`);
+        renderAll();
+        return;
+      }
+      addLink(selectedNode, nodeId, currentMode);
+      selectedNode = null;
+      renderAll();
+    }
+
+    function addLink(from, to, type) {
+      const duplicate = links.some(link =>
+        ((link.from === from && link.to === to) || (link.from === to && link.to === from)) && link.type === type
+      );
+      if (!duplicate) links.push({ from, to, type });
+      updateStatus(`Added a <strong>${modeLabel(type)}</strong> line between <strong>${getCardById(from).label}</strong> and <strong>${getCardById(to).label}</strong>.`);
+    }
+
+    function removeLink(index) {
+      links.splice(index, 1);
+      renderAll();
+    }
+
+    function modeLabel(mode) {
+      return {
+        affects: 'Affects Resource',
+        duality: 'Duality',
+        participates: 'Participates'
+      }[mode];
+    }
+
+    function lineColor(type) {
+      return {
+        affects: getComputedStyle(document.documentElement).getPropertyValue('--resource-line').trim(),
+        duality: getComputedStyle(document.documentElement).getPropertyValue('--duality-line').trim(),
+        participates: getComputedStyle(document.documentElement).getPropertyValue('--agent-line').trim()
+      }[type];
+    }
+
+    function renderLines() {
+      lineLayer.innerHTML = '';
+      const wrapRect = canvasWrap.getBoundingClientRect();
+      links.forEach(link => {
+        const fromEl = canvasWrap.querySelector(`.canvas-node[data-id="${link.from}"]`);
+        const toEl = canvasWrap.querySelector(`.canvas-node[data-id="${link.to}"]`);
+        if (!fromEl || !toEl) return;
+        const a = fromEl.getBoundingClientRect();
+        const b = toEl.getBoundingClientRect();
+        const x1 = a.left + a.width / 2 - wrapRect.left;
+        const y1 = a.top + a.height / 2 - wrapRect.top;
+        const x2 = b.left + b.width / 2 - wrapRect.left;
+        const y2 = b.top + b.height / 2 - wrapRect.top;
+        const dx = Math.abs(x2 - x1);
+        const curve = Math.max(40, dx * 0.25);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `M ${x1} ${y1} C ${x1 + curve} ${y1}, ${x2 - curve} ${y2}, ${x2} ${y2}`;
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', lineColor(link.type));
+        path.setAttribute('stroke-width', '4');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('opacity', '0.95');
+        if (link.type === 'duality') path.setAttribute('stroke-dasharray', '10 8');
+        if (link.type === 'participates') path.setAttribute('stroke-dasharray', '4 6');
+        lineLayer.appendChild(path);
+      });
+    }
+
+    function renderLinks() {
+      linksArea.innerHTML = '';
+      if (!links.length) {
+        linksArea.innerHTML = '<div class="small">No lines yet.</div>';
+        return;
+      }
+      links.forEach((link, idx) => {
+        const pill = document.createElement('div');
+        pill.className = 'link-pill';
+        pill.innerHTML = `<span><strong>${getCardById(link.from).label}</strong> — ${modeLabel(link.type)} — <strong>${getCardById(link.to).label}</strong></span>`;
+        const btn = document.createElement('button');
+        btn.textContent = '×';
+        btn.addEventListener('click', () => removeLink(idx));
+        pill.appendChild(btn);
+        linksArea.appendChild(pill);
+      });
+    }
+
+    function validateModel() {
+      const checks = [];
+      const resources = sortedCardsByPlacement('resource');
+      const events = sortedCardsByPlacement('event');
+      const agents = sortedCardsByPlacement('agent');
+      const correctSorts = cards.filter(card => placements[card.id] === card.type).length;
+      const sortingScore = Math.round((correctSorts / cards.length) * 40);
+
+      const allSorted = Object.values(placements).every(v => v !== 'bank');
+      checks.push({ ok: allSorted, text: allSorted ? 'All cards are sorted.' : 'Some cards are still in the bank.' });
+
+      const eventDetails = events.map(event => {
+        const resourceLinks = links.filter(l => l.type === 'affects' && (l.from === event.id || l.to === event.id))
+          .filter(l => resources.some(r => r.id === l.from || r.id === l.to));
+        const dualityLinks = links.filter(l => l.type === 'duality' && (l.from === event.id || l.to === event.id))
+          .filter(l => events.some(e => e.id === l.from) && events.some(e => e.id === l.to));
+        const agentSet = new Set();
+        links.filter(l => l.type === 'participates').forEach(l => {
+          if (l.from === event.id && agents.some(a => a.id === l.to)) agentSet.add(l.to);
+          if (l.to === event.id && agents.some(a => a.id === l.from)) agentSet.add(l.from);
+        });
+        return {
+          event,
+          hasResource: resourceLinks.length > 0,
+          hasDuality: dualityLinks.length > 0,
+          agentCount: agentSet.size
+        };
+      });
+
+      const allEventsHaveResources = eventDetails.every(d => d.hasResource);
+      const allEventsHaveDuality = eventDetails.every(d => d.hasDuality);
+      const allEventsHaveAgents = eventDetails.every(d => d.agentCount >= 2);
+      const eventRuleCount = eventDetails.filter(d => d.hasResource && d.hasDuality && d.agentCount >= 2).length;
+      const eventScore = events.length ? Math.round((eventRuleCount / events.length) * 60) : 0;
+
+      checks.push({ ok: resources.length > 0 && events.length > 0 && agents.length > 0, text: resources.length > 0 && events.length > 0 && agents.length > 0 ? 'The model includes resources, events, and agents.' : 'The model needs resources, events, and agents.' });
+      checks.push({ ok: allEventsHaveResources, text: allEventsHaveResources ? 'Every event has a resource link.' : 'At least one event is missing a resource link.' });
+      checks.push({ ok: allEventsHaveDuality, text: allEventsHaveDuality ? 'Every event has a duality link.' : 'At least one event is missing a duality link.' });
+      checks.push({ ok: allEventsHaveAgents, text: allEventsHaveAgents ? 'Every event has at least two agents.' : 'At least one event has fewer than two agents.' });
+
+      return { checks, score: Math.max(0, Math.min(100, sortingScore + eventScore)) };
+    }
+
+    function renderValidation() {
+      const result = validateModel();
+      validationArea.innerHTML = '';
+      result.checks.forEach(check => {
+        const div = document.createElement('div');
+        div.className = `check ${check.ok ? 'pass' : 'fail'}`;
+        div.textContent = check.text;
+        validationArea.appendChild(div);
+      });
+      scoreBadge.textContent = `Score: ${result.score} / 100`;
+    }
+
+    function updateStatus(html) {
+      statusBox.innerHTML = html;
+    }
+
+    function renderAll() {
+      renderTokens();
+      renderCanvasNodes();
+      requestAnimationFrame(renderLines);
+      renderLinks();
+      renderValidation();
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === currentMode);
+      });
+    }
+
+    document.getElementById('loadCycleBtn').addEventListener('click', () => loadCycle(cycleSelect.value, true));
+    document.getElementById('shuffleBtn').addEventListener('click', () => loadCycle(currentCycle, true));
+    document.getElementById('resetBtn').addEventListener('click', () => loadCycle(currentCycle, false));
+    cycleSelect.addEventListener('change', e => { currentCycle = e.target.value; });
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentMode = btn.dataset.mode;
+        selectedNode = null;
+        updateStatus(`Selected mode: <strong>${modeLabel(currentMode)}</strong><br>Click one node, then click another node to create a line.`);
+        renderAll();
+      });
+    });
+
+    window.addEventListener('resize', () => requestAnimationFrame(renderLines));
+
+    initCycleOptions();
+    setupDropzone(bank, 'bank');
+    setupDropzone(resourceBin, 'resource');
+    setupDropzone(eventBin, 'event');
+    setupDropzone(agentBin, 'agent');
+    loadCycle(currentCycle, true);
+  </script>
+</body>
+</html>
